@@ -1,0 +1,115 @@
+{\bf [50 points] Linkage Disequilibrium}
+
+\vspace{2mm}
+In this problem we will use genotype sequences for the first $5,000$ SNPS in mouse chromosome 1, derived from a case study involving $1,063$ mice; these data are contained in the file \texttt{chromosome\_1\_phased\_first\_5000\_snps.vcf} (you can read more about this file format \href{http://faculty.washington.edu/browning/beagle/intro-to-vcf.html}{here}). Usually, after sequencing each sample's genome, you would have to phase the sequences (assign each of two alleles at an SNP site to the maternal or paternal chromosome) using a tool like Beagle. However, we have already done this for you, so you are provided as input the phased haplotype data. \\
+
+\fbox{\parbox{0.9\textwidth}{
+\textbf{Note: }{Your code is graded by an autograder. You have been given a code skeleton in \texttt{linkage\_disequilibrium.py}. You must complete 6 functions (\texttt{split\_phased\_snps},\\ \texttt{compute\_allele\_frequencies}, \texttt{compute\_haplotype\_frequencies}, \texttt{estimate\_D}, \\ \texttt{estimate\_D\_prime} and \texttt{compute\_r\_squared}).  At the end, the script should be able to run with the following command:\\
+
+\texttt{python linkage\_disequilibrium.py} \\
+
+The formats of arguments and return values of each function are explicitly described in the skeleton code. For the hyperparameters, please use the \textbf{default} values specified in the skeleton code. 
+}
+}
+}
+
+\vspace{2mm}
+
+\begin{enumerate}
+    \item (15 points) Complete the \texttt{split\_phased\_snps},
+    \texttt{compute\_allele\_frequencies} and \\
+    \texttt{compute\_haplotype\_frequencies} functions. \\
+    
+    The \texttt{split\_phased\_snps} function takes as input a Pandas DataFrame of dimensions \texttt{num\_snps $\times$ num\_samples} which contains phased haplotype data - that is, each element in the array is a string of the form 
+    $$\texttt{"maternal\_chromosome\_allele | paternal\_chromosome\_allele"}$$
+    
+    Here, a \texttt{0} indicates that the allele is the reference allele, whereas a \texttt{1} indicates that the allele is the alternate allele. For example, if an entry in the dataframe is \texttt{0 | 1}, the reference allele at that position is \texttt{G} and the alternate allele at that position is \texttt{A}, then according to the entry the maternal chromosome allele is \texttt{G} and the paternal chromosome allele is \texttt{A}. The output of this function should be a Numpy array of dimensions \texttt{2 $\times$ num\_snps $\times$ num\_samples}, where the last dimension holds the data for the maternal and paternal chromosome separately.\\
+    
+    The \texttt{compute\_allele\_frequencies} function should calculate the frequency of the reference and alternate alleles for each SNP, so the output should be a $2$-tuple of Numpy arrays, each with length \texttt{num\_snps}. \\
+    
+    The \texttt{compute\_haplotype\_frequencies} function should calculate the frequency of each of four haplotypes (\texttt{(1, 1)}, \texttt{(1, 0)}, \texttt{(0, 1)}, and \texttt{(0, 0)}) for each pair of SNPs; thus, the output should be a $4$-tuple of Numpy arrays, each with dimensions \texttt{num\_snps $\times$ num\_snps}.
+
+\end{enumerate}        
+    Next, we would like to compute the linkage disequilibrium between every pair of SNPs. Suppose that we have two SNPs, one at locus $p$ and the other at locus $q$. Define two indicator variables $P \sim \text{Bernoulli}(p_1)$ and $Q\sim \text{Bernoulli}(q_1)$ which take the value of $1$ when the respective SNP contains the reference allele and a value of $0$ when it contains the alternate allele. Furthermore, let's denote \begin{align*}
+        p_0 &= 1 - p_1 \\
+        q_0 &= 1 - q_1 \\
+        p_{11} &= \mathbb{P}(P = 1, Q = 1) \\
+        p_{10} &= \mathbb{P}(P = 1, Q = 0) \\
+        p_{01} &= \mathbb{P}(P = 0, Q = 1) \\
+        p_{00} &= \mathbb{P}(P = 0, Q = 0)
+    \end{align*}
+
+    Essentially, the $p_{ij}$ indicate the probability that $P = i$ \textbf{and} that $Q=j$. In practice,  can estimate these probabilities empirically from our data. \\
+    
+    Note that, assuming the SNPs are independently inherited, we should have that $p_{ij} = p_{i} \cdot p_{j}$. Thus, we can define the \textit{linkage disequilibrium} ($D$) as the difference between these two quantities. For clarity, here is a table showing the relationships between these quantities:
+    \begin{center}
+        \begin{tabular}{|c|c|c|}
+        \hline
+             & Q=1& Q=0\\
+        \hline
+             P=1& $p_{1}q_{1} + D = p_{11}$& $p_{1}q_{0} - D = p_{10}$\\
+        \hline
+             P=0& $p_{0}q_{1} - D = p_{01}$& $p_{0}q_{0} + D = p_{00}$ \\
+        \hline
+        \end{tabular}        
+    \end{center}
+
+\begin{enumerate}[resume]
+    \item (5 points) Naively, we could estimate $D = p_{11} - p_{1}q_{1}$; however, this would not make full use of all the haplotype frequencies that we have estimated. Show that $$D=p_{11} \cdot p_{00} - p_{10} \cdot p_{01}$$
+    is also a valid estimator for $D$.
+%%%%%%%%%%%%%%%%%%
+    \begin{solution}
+    \end{solution}
+%%%%%%%%%%%%%%%%%%
+\end{enumerate}
+Next, we can implement the computation of $D$ to compare the linkage disequilibrium of different SNPs. However, notice that $D$ can take on negative values even though frequencies cannot be negative; this makes it difficult to compare $D$ values. To address this, we can divide $D$ by $D_{max}$, defined as follows:
+    \begin{align*}
+        D &= p_{11} \cdot p_{00} - p_{10} \cdot p_{01} \\
+        D' &= | D / D_{\text{max}} | \text{, where} \\
+        D_{\text{max}} &= \begin{cases}
+        \min(p_1q_2, p_2q_1), & D > 0 \\
+        \max(-p_1q_1, -p_2q_2), & D <= 0 \\
+        \end{cases}
+    \end{align*}
+    This adjustment guarantees that $D'$ lies in the range $[0, 1]$.
+    
+\begin{enumerate}[resume]
+    \item (10 points) Implement \texttt{calculate\_D} and \texttt{calculate\_D\_prime} as described above. Attach a heatmap displaying the square matrix of $D'$ values, with brighter colors indicating a value near $1$ and darker colors indicating values near $0$. From the plot, you should be able to identify linkage blocks - that is, adjacent regions of the DNA that are inherited together and show complete linkage disequilibrium (there should be anywhere from $5 - 10$ of these of varying sizes, depending on how stringent of a criterion you use for defining them). How big is the biggest clear linkage block, in terms of the number of SNPs spanned (a rough estimate is enough)? How small is the smallest clear linkage block? \\
+    
+    \textbf{Hint \#1:} Note that the $D'$ matrix is symemtric, so you only need to calculate its values for either the upper or lower triangular values of the matrix.
+    
+    \textbf{Hint \#2:} Make sure to vectorize your calculations as much as possible to ensure a reasonable runtime. With an efficient implementation, your code should for this part shouldn't run for longer than $10$ minutes. For debugging, you can try testing on just a subset of the SNPs.
+
+%%%%%%%%%%%%%%%%%%    
+    \begin{solution}
+    \end{solution}
+%%%%%%%%%%%%%%%%%%
+\end{enumerate}
+
+Another common measure of the linkage disequilibrium between two loci is $r^2$, the square of Pearson's correlation coefficient. Pearson's correlation coefficient for two variables $X$ and $Y$ is defined as follows:
+\begin{align*}
+    r(X, Y) &= \frac{\text{cov}(X, Y)}{\sigma_{X}\sigma_{Y}}\text{, where} \\
+    \text{cov}(X, Y) &= \mathbb{E}[(X - \mathbb{E}[X])(Y - \mathbb{E}[Y])] \\
+    \sigma^2_{X} &= \mathbb{E}[(X - \mathbb{E}[X])^2] 
+\end{align*}
+In other words, $\text{cov}(X, Y)$ is the covariance of $X$ and $Y$ and $\sigma^2_{X}$ is the variance of $X$.\\
+
+\begin{enumerate}[resume]
+    \item (10 points) 
+    Show that, for indicator variables $P \sim \text{Bernoulli}(p_1)$ and $Q \sim \text{Bernoulli}(q_1)$, $$r(P, Q) \approx \frac{D}{\sqrt{p_1p_2q_1q_2}}$$
+    where $D = p_{11} - p_1q_1$ is the linkage disequilibrium as calculated in part (b). Note that we use the naive definition of $D$ for this proof. \\
+    
+    \textbf{Hint:} Recall that the variance of a Bernoulli variable $X$ with parameter $p$ is $\sigma^2_X = p(1-p)$.
+
+%%%%%%%%%%%%%%%%%%
+    \begin{solution}
+    \end{solution}
+%%%%%%%%%%%%%%%%%%
+
+    \item (10 points) Using the formula that you derived in part (c), implement \texttt{calculate\_r\_squared}. Attach a heatmap of the square matrix of $r^2$ values, similar to part (d). Compare to the heatmap in (d); qualitatively, what similarities/differences do you notice? 
+%%%%%%%%%%%%%%%%%%
+    \begin{solution}
+    \end{solution}
+%%%%%%%%%%%%%%%%%%
+\end{enumerate}
+\newpage

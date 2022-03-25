@@ -1,0 +1,38 @@
+{\bf [26 points] Hardy-Weinberg Equilibrium}
+
+\vspace{2mm}
+In this problem, we will leverage the phasing of the haplotype data in order to derive aspects about the structure of the population that we are working with;. Here we will use all the SNPs from chromosome $19$ for the same $1,063$ mice that we used in the previous problem; these data are contained in the file \texttt{chromosome\_19\_phased\_snps.vcf}
+
+\fbox{\parbox{0.9\textwidth}{
+\textbf{Note: }{Your code is graded by an autograder. You have been given a code skeleton in \texttt{population\_structure.py}. You must complete 4 functions \texttt{compute\_effective\_allele\_frequencies},\\ \texttt{compute\_genotype\_counts}, \texttt{calculate\_chi\_squared\_statistic}, \\ \texttt{detect\_snps\_under\_selection}).  At the end, the script should be able to run with the following command:\\
+
+\texttt{python hardy\_weinberg.py} \\
+
+The formats of arguments and return values of each function are explicitly described in the skeleton code. For the hyperparameters, please use the \textbf{default} values specified in the skeleton code. 
+}
+}
+}
+
+First, we will use the Hardy-Weinberg test. 
+The Hardy-Weinberg test evaluates whether or not a genomic locus violates the Hardy-Weinberg equilibrium. The statistic can be written as follows
+$$\chi^2 = \sum_{i= 1}^{\text{\# of categories}} \frac{(\text{observed count}_i - \text{expected count}_i)^2}{\text{expected count}_i}$$
+For our application, we have three categories at each locus (homozygous dominant, heterozygous and homozygous recessive). After computing the $\chi^2$ statistic, we can compare it to a threshold based on our significance level and the degrees-of-freedom parameter to detect SNPs under selection.
+\begin{enumerate}
+    \item (10 points) Implement the  \texttt{compute\_effective\_allele\_frequencies} and \texttt{compute\_genotype\_counts} functions. These will be used for computing the $\chi^2$ statistic in part (b).
+    
+    \textbf{Note:} For this problem, you will calculate the effective allele frequencies in a slightly different way from how you calculated them in the previous problem. In particular, if you have that $c_{11}$ is the number of $\texttt{"0" | "0"}$ genotypes observed, $c_{12}$ is the number of $\texttt{"0" | "1"}$ genotypes observed, $c_{21}$ is the number of $\texttt{"1" | "0"}$ genotypes observed and $c_{00}$ is the number of $\texttt{"1" | "1"}$, then the frequency of the reference allele is $\frac{2c_{11} + (c_{21} + c_{12})}{2(c_{11} + c_{21} + c_{12} + c_{22})}$; the complement holds for the frequency of the alternate.
+    
+    \item (11 points) Implement the \texttt{calculate\_chi\_squared\_statistic} and \texttt{detect\_snps\_under\_selection} functions. Use these functions to identify SNPs that are actively under selection. Using a significance level $=0.01$ and degrees-of-freedom $=1$, what fraction of SNPs from the sample violate Hardy-Weinberg equilibrium?\\
+    
+    \textbf{Hint:} Use \href{https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.chi2.html}{\texttt{scipy.stats.distributions.chi2}}'s \texttt{ppf} method to calculate the correct threshold for significance.
+%%%%%%%%%%%%%%%%%%
+    \begin{solution}
+    \end{solution}
+%%%%%%%%%%%%%%%%%%
+    \item (5 points) For a $\chi^2$ test, we must first specify the degrees-of-freedom parameter. This parameter is the number of freely varying factors in our data, and it governs the shape of the $\chi^2$ distribution. In applications to genotypic frequencies, despite the fact that there are three different categories, we usually use a value of $1$ for the degrees-of-freedom parameter. Why is this?
+    
+    \begin{solution}
+    
+    \end{solution}
+\end{enumerate}
+\newpage
